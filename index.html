@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox-X: Pixel Battle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; user-select: none; }
+        body { margin: 0; background: #1a1a2e; color: #fff; overflow: hidden; }
+
+        /* شاشة تسجيل الدخول والاختيار */
+        #authScreen {
+            position: fixed; inset: 0; background: radial-gradient(circle, #2a2a4e, #000);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .auth-card {
+            background: rgba(0, 0, 0, 0.85); padding: 30px; border-radius: 20px; border: 2px solid #00f2fe;
+            width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 254, 0.5);
+        }
+        input {
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px;
+            border: 1px solid #fff; background: #333; color: #fff; font-size: 16px; outline: none;
+        }
+        .char-select { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
+        .char-option {
+            border: 3px solid transparent; border-radius: 15px; cursor: pointer;
+            padding: 10px; transition: 0.2s; width: 90px; height: 90px;
+            background: #222; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .char-option.selected { border-color: #00ff88; background: #333; box-shadow: 0 0 10px #00ff88; }
+        .char-img { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+        .btn {
+            width: 100%; padding: 12px; border-radius: 10px; border: none;
+            background: #00f2fe; color: #000; font-weight: 900; font-size: 18px; cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+
+        /* واجهة اللعبة الرئيسية */
+        #gameScreen { position: fixed; inset: 0; display: none; background: #24243e; }
+        
+        /* الشريط العلوي */
+        .hud {
+            position: absolute; top: 15px; left: 15px; right: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; pointer-events: none;
+        }
+        .robux-counter {
+            background: rgba(0,0,0,0.8); color: #ffd700; font-weight: bold;
+            padding: 10px 20px; border-radius: 50px; font-size: 18px; border: 1px solid #ffd700;
+        }
+        .exit-btn {
+            pointer-events: auto; background: #ff4757; color: white; border: none;
+            padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;
+        }
+
+        /* ساحة اللعب */
+        #playArea {
+            position: relative; width: 100vw; height: 100vh;
+            background: linear-gradient(to bottom, #1e1e3f, #111122);
+            overflow: hidden;
+        }
+
+        /* الشخصية الرئيسية */
+        #playerSprite {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            width: 90px; height: 130px;
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            image-rendering: pixelated; /* يحافظ على جودة البكسل الحقيقية زي روبلوكس */
+            z-index: 10;
+            transition: left 0.1s linear;
+        }
+
+        /* المتجر (Catalog) */
+        #shopModal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            background: rgba(20, 20, 35, 0.95); padding: 25px; border-radius: 20px;
+            border: 2px solid #ffd700; width: 320px; text-align: center;
+            transition: 0.3s ease-in-out; z-index: 200; box-shadow: 0 0 40px rgba(0,0,0,0.8);
+        }
+        #shopModal.active { transform: translate(-50%, -50%) scale(1); }
+        .shop-item {
+            background: rgba(0,0,0,0.6); padding: 12px; margin-top: 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #444;
+        }
+        .shop-char-img { width: 45px; height: 45px; image-rendering: pixelated; }
+
+        /* أزرار التحكم باللمس */
+        .controls {
+            position: absolute; bottom: 20px; left: 20px; display: flex; gap: 12px;
+            z-index: 100;
+        }
+        .ctrl-btn {
+            background: rgba(255,255,255,0.25); border: 2px solid #fff; color: #fff;
+            width: 65px; height: 65px; border-radius: 50%; font-size: 26px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+        .ctrl-btn:active { background: rgba(255,255,255,0.5); }
+    </style>
+</head>
+<body>
+
+    <!-- 1️⃣ شاشة تسجيل الدخول والاختيار -->
+    <div id="authScreen">
+        <div class="auth-card">
+            <h1 style="color: #00f2fe; margin-top: 0;">Roblox-X</h1>
+            <input type="text" id="username" placeholder="اكتب اسم المستخدم...">
+            
+            <p style="margin: 15px 0 10px; font-size: 15px;">اختار شخصيتك الأساسية:</p>
+            <div class="char-select">
+                <!-- شخصية الولد (بيكون) -->
+                <div class="char-option selected" id="boyOpt" onclick="selectChar('boy')">
+                    <span style="font-size: 12px; margin-bottom: 5px; color: #00ff88;">ولد (بيكون)</span>
+                </div>
+                <!-- شخصية البنت (شعر أحمر) -->
+                <div class="char-option" id="girlOpt" onclick="selectChar('girl')">
+                    <span style="font-size: 12px; margin-bottom: 5px; color: #ff7675;">بنت</span>
+                </div>
+            </div>
+            <button class="btn" onclick="startGame()">ابدأ اللعب 🎮</button>
+        </div>
+    </div>
+
+    <!-- 2️⃣ واجهة اللعبة -->
+    <div id="gameScreen">
+        <div class="hud">
+            <div class="robux-counter" id="robuxDisplay">الروبوكس: 30 💎</div>
+            <button class="exit-btn" onclick="exitGame()">خروج 🔄</button>
+        </div>
+
+        <div id="playArea">
+            <!-- الشخصية الرئيسية -->
+            <div id="playerSprite"></div>
+        </div>
+
+        <!-- المتجر (Catalog) -->
+        <div id="shopModal">
+            <h3 style="color: #ffd700; margin-top: 0;">متجر السكنات (Catalog)</h3>
+            <div class="shop-item">
+                <div style="text-align: right;">
+                    <span style="display: block; font-weight: bold; font-size: 14px;">سكن البدلة الرسمي</span>
+                    <span style="color: #ffd700; font-size: 12px;">5 روبوكس</span>
+                </div>
+                <button class="btn" style="width: auto; padding: 8px 15px; background: #00ff88; font-size: 14px;" onclick="buySuit()">شراء</button>
+            </div>
+            <button class="exit-btn" style="margin-top: 20px; width: 100%; background: #444;" onclick="toggleShop()">إغلاق</button>
+        </div>
+
+        <!-- أزرار التحكم -->
+        <div class="controls">
+            <button class="ctrl-btn" onclick="movePlayer('left')">⬅️</button>
+            <button class="ctrl-btn" onclick="movePlayer('right')">➡️</button>
+            <button class="ctrl-btn" style="background: rgba(255,215,0,0.3); border-color: #ffd700;" onclick="toggleShop()">🛒</button>
+        </div>
+    </div>
+
+    <script>
+        let robux = 30;
+        let currentUser = "";
+        let selectedCharacter = 'boy'; 
+        let playerElement = document.getElementById('playerSprite');
+
+        // روابط صور الشخصيات والسكنات (تقدر تستبدل الروابط دي بصور الخاصة بك وقت ما تحب)
+        const charSprites = {
+            boy: 'https://tr.rbxassets.com/08016968e2855d7289621c65666f68e1/420/420/Avatar/Png', 
+            girl: 'https://tr.rbxassets.com/433a3692f283c3c5a7f6b7a818669748/420/420/Avatar/Png', 
+            suit: 'https://tr.rbxassets.com/75c43235e028c9643a8130e674d0e6b2/420/420/Avatar/Png'  
+        };
+
+        function selectChar(type) {
+            selectedCharacter = type;
+            document.getElementById('boyOpt').classList.toggle('selected', type === 'boy');
+            document.getElementById('girlOpt').classList.toggle('selected', type === 'girl');
+        }
+
+        function startGame() {
+            const user = document.getElementById('username').value.trim();
+            if(!user) return alert("اكتب اسم المستخدم الأول يا بطل!");
+            currentUser = user;
+
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            // تحميل السكن الأساسي حسب الاختيار
+            playerElement.style.backgroundImage = `url('${charSprites[selectedCharacter]}')`;
+        }
+
+        function exitGame() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'flex';
+        }
+
+        // حركة الشخصية يمين ويسار
+        let playerLeft = 50; 
+        function movePlayer(direction) {
+            const playAreaWidth = document.getElementById('playArea').offsetWidth;
+            if(direction === 'left') {
+                playerLeft = Math.max(5, playerLeft - 4);
+            } else {
+                playerLeft = Math.min(95, playerLeft + 4);
+            }
+            playerElement.style.left = playerLeft + '%';
+        }
+
+        // فتح وإغلاق المتجر
+        function toggleShop() {
+            document.getElementById('shopModal').classList.toggle('active');
+        }
+
+        // شراء سكن البدلة من المتجر
+        function buySuit() {
+            if(robux >= 5) {
+                robux -= 5;
+                document.getElementById('robuxDisplay').innerText = `الروبوكس: ${robux} 💎`;
+                playerElement.style.backgroundImage = `url('${charSprites.suit}')`; // تحويل السكن للبدلة فوراً
+                toggleShop();
+                alert("🎉 مبروك! اشتريت سكن البدلة الرسمي بنجاح.");
+            } else {
+                alert("❌ رصيدك لا يكفي لشراء البدلة!");
+            }
+        }
+    </script>
+</body>
+</html>
