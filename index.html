@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox</title>
+    <title>Roblox Ultimate System - Complete Edition</title>
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; user-select: none; }
-        body { margin: 0; background: #12121e; color: #fff; overflow: hidden; }
+        body { margin: 0; background: #0f0f1a; color: #fff; overflow: hidden; }
 
-        /* شاشة تسجيل الدخول الحقيقية */
-        #authScreen {
-            position: fixed; inset: 0; background: linear-gradient(135deg, #111, #2b2b40);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
-        }
-        .auth-card {
-            background: rgba(0, 0, 0, 0.85); padding: 25px; border-radius: 20px; border: 2px solid #00f2fe;
-            width: 90%; max-width: 380px; text-align: center; box-shadow: 0 0 25px rgba(0, 242, 254, 0.3);
+        .screen { display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; }
+        .active-screen { display: flex; }
+
+        .card {
+            background: rgba(0, 0, 0, 0.88); padding: 25px; border-radius: 20px; border: 2px solid #00f2fe;
+            width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0, 242, 254, 0.4);
         }
         input {
-            width: 100%; padding: 11px; margin: 8px 0; border-radius: 8px;
-            border: 1px solid #555; background: #222; color: #fff; font-size: 15px; outline: none;
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px;
+            border: 1px solid #fff; background: #222; color: #fff; font-size: 16px; outline: none;
         }
         .btn {
             width: 100%; padding: 12px; border-radius: 10px; border: none;
@@ -29,59 +31,43 @@
         }
         .btn:active { transform: scale(0.98); }
 
-        /* صفحة الـ Home الرئيسية */
-        #homeScreen {
-            position: fixed; inset: 0; background: #1a1a2e; display: none;
-            flex-direction: column; padding: 20px; z-index: 900;
-        }
+        #homeScreen { background: #1a1a2e; justify-content: flex-start; padding: 20px; }
         .home-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.5); padding: 15px 20px; border-radius: 15px; border: 1px solid #333;
+            width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.6); padding: 15px 20px; border-radius: 15px; border: 1px solid #444; margin-bottom: 30px;
         }
         .profile-info { display: flex; align-items: center; gap: 15px; }
         .profile-avatar-small {
-            width: 50px; height: 50px; background-size: contain; background-repeat: no-repeat; background-position: center;
-            image-rendering: pixelated; border-radius: 50%; background-color: #333; border: 2px solid #00ff88;
+            width: 60px; height: 60px; background-size: contain; background-repeat: no-repeat; background-position: center;
+            image-rendering: pixelated; border-radius: 50%; background-color: #222; border: 2px solid #00ff88;
         }
         .home-menu {
-            display: flex; gap: 15px; justify-content: center; margin-top: 50px; flex-wrap: wrap;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 500px;
         }
         .home-card {
             background: #252542; border: 2px solid #444; border-radius: 20px;
-            width: 160px; height: 160px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
-            text-align: center; gap: 10px;
+            height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; text-align: center; gap: 10px;
         }
-        .home-card:hover { border-color: #00f2fe; transform: scale(1.05); }
-        .home-card span { font-size: 18px; font-weight: bold; }
+        .home-card:hover { border-color: #00f2fe; transform: scale(1.03); }
 
-        /* شاشة الـ Avatar (تعديل السكن) */
-        #avatarScreen {
-            position: fixed; inset: 0; background: #1a1a2e; display: none;
-            flex-direction: column; align-items: center; justify-content: center; z-index: 950;
-        }
         .char-select { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
         .char-option {
             border: 3px solid #444; border-radius: 15px; cursor: pointer;
-            padding: 10px; width: 90px; height: 90px; background: #222;
+            padding: 10px; width: 100px; height: 100px; background: #222;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .char-option.selected { border-color: #00ff88; background: #333; box-shadow: 0 0 10px #00ff88; }
+        .char-option.selected { border-color: #00ff88; background: #333; box-shadow: 0 0 15px #00ff88; }
+        .char-img { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; image-rendering: pixelated; }
 
-        /* شاشة اختيار المابات */
-        #mapScreen {
-            position: fixed; inset: 0; background: #151528; display: none;
-            flex-direction: column; align-items: center; justify-content: center; z-index: 900;
-        }
         .map-grid { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
         .map-card {
             background: #22223b; border: 2px solid #ff7675; border-radius: 15px;
-            width: 180px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s;
+            width: 180px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s;
         }
         .map-card:hover { transform: scale(1.05); border-color: #00ff88; }
 
-        /* واجهة اللعبة داخل الماب */
-        #gameScreen { position: fixed; inset: 0; display: none; background: #24243e; z-index: 900; }
+        #gameScreen { background: #24243e; }
         .hud {
             position: absolute; top: 15px; left: 15px; right: 15px;
             display: flex; justify-content: space-between; align-items: center; z-index: 100;
@@ -96,35 +82,33 @@
         }
         #playerSprite {
             position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-            width: 100px; height: 140px; background-size: contain; background-repeat: no-repeat; background-position: center;
+            width: 110px; height: 150px; background-size: contain; background-repeat: no-repeat; background-position: center;
             image-rendering: pixelated; z-index: 10; transition: left 0.1s linear, bottom 0.2s ease;
         }
         #hitEffect {
-            position: absolute; display: none; font-size: 30px; font-weight: 900; color: #ff4757;
+            position: absolute; display: none; font-size: 35px; font-weight: 900; color: #ff4757;
             z-index: 20; pointer-events: none; text-shadow: 0 0 10px #000;
         }
 
-        /* المتجر (Catalog Modal) */
         #shopModal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            background: rgba(20, 20, 35, 0.95); padding: 20px; border-radius: 20px;
-            border: 2px solid #ffd700; width: 300px; text-align: center;
-            transition: 0.3s ease-in-out; z-index: 2000; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background: rgba(20, 20, 35, 0.95); padding: 25px; border-radius: 20px;
+            border: 2px solid #ffd700; width: 320px; text-align: center;
+            transition: 0.3s ease-in-out; z-index: 2000; box-shadow: 0 0 40px rgba(0,0,0,0.8);
         }
         #shopModal.active { transform: translate(-50%, -50%) scale(1); }
         .shop-item {
-            background: rgba(0,0,0,0.6); padding: 10px; margin-top: 10px; border-radius: 10px;
+            background: rgba(0,0,0,0.6); padding: 12px; margin-top: 15px; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center; border: 1px solid #444;
         }
 
-        /* أزرار التحكم باللمس داخل اللعبة */
         .controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
             display: flex; justify-content: space-between; align-items: center; z-index: 100;
         }
         .ctrl-btn {
             background: rgba(255,255,255,0.25); border: 2px solid #fff; color: #fff;
-            width: 60px; height: 60px; border-radius: 50%; font-size: 22px; font-weight: bold;
+            width: 65px; height: 65px; border-radius: 50%; font-size: 24px; font-weight: bold;
             display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px);
         }
         .ctrl-btn:active { background: rgba(255,255,255,0.5); }
@@ -134,8 +118,8 @@
 <body>
 
     <!-- 1️⃣ شاشة تسجيل الدخول -->
-    <div id="authScreen">
-        <div class="auth-card">
+    <div id="authScreen" class="screen active-screen">
+        <div class="card">
             <h2 style="color: #00f2fe; margin-top: 0;">Roblox Login</h2>
             <input type="text" id="regUser" placeholder="اسم المستخدم...">
             <input type="date" id="regDate" placeholder="تاريخ الميلاد...">
@@ -144,11 +128,11 @@
         </div>
     </div>
 
-    <!-- 2️⃣ صفحة الهوم (Home) -->
-    <div id="homeScreen">
+    <!-- 2️⃣ الصفحة الرئيسية (Home) -->
+    <div id="homeScreen" class="screen">
         <div class="home-header">
             <div class="profile-info">
-                <div class="profile-avatar-small" id="navAvatarImg"></div>
+                <div class="profile-avatar-small" id="homeAvatarImg"></div>
                 <div>
                     <h3 id="displayName" style="margin: 0; color: #00f2fe;">اللاعب</h3>
                     <span style="color: #ffd700; font-size: 14px;" id="homeRobux">30 💎</span>
@@ -158,57 +142,81 @@
         </div>
 
         <div class="home-menu">
-            <div class="home-card" onclick="openAvatar()">
-                <span style="font-size: 40px;">👤</span>
-                <span style="color: #00ff88;">Avatar (السكن)</span>
+            <div class="home-card" onclick="showScreen('avatarScreen')">
+                <span style="font-size: 35px;">👤</span>
+                <span style="color: #00ff88; font-size: 18px; font-weight: bold;">Avatar (السكن)</span>
             </div>
-            <div class="home-card" onclick="openCatalog()">
-                <span style="font-size: 40px;">🛒</span>
-                <span style="color: #ffd700;">Catalog (المتجر)</span>
+            <div class="home-card" onclick="showScreen('catalogScreen')">
+                <span style="font-size: 35px;">🛒</span>
+                <span style="color: #ffd700; font-size: 18px; font-weight: bold;">Catalog (المتجر)</span>
             </div>
-            <div class="home-card" onclick="openMaps()">
-                <span style="font-size: 40px;">🗺️</span>
-                <span style="color: #ff7675;">Maps (المابات)</span>
+            <div class="home-card" onclick="showScreen('mapScreen')">
+                <span style="font-size: 35px;">🗺️</span>
+                <span style="color: #ff7675; font-size: 18px; font-weight: bold;">Maps (المابات)</span>
+            </div>
+            <div class="home-card" onclick="toggleShop()" style="background: #2a2a50; border-color: #ffd700;">
+                <span style="font-size: 35px;">💎</span>
+                <span style="color: #00f2fe; font-size: 18px; font-weight: bold;">متجر البدلة</span>
             </div>
         </div>
     </div>
 
-    <!-- 3️⃣ شاشة الـ Avatar (تعديل السكن) -->
-    <div id="avatarScreen">
-        <h2 style="color: #00ff88;">تعديل الـ Avatar</h2>
-        <p>اختار شكلك الأساسي:</p>
-        <div class="char-select">
-            <div class="char-option selected" id="boyOpt" onclick="selectChar('boy')">
-                <span style="font-size: 13px; color: #00ff88; font-weight: bold;">ولد</span>
+    <!-- 3️⃣ شاشة تعديل الأفاتار (Avatar Editor) -->
+    <div id="avatarScreen" class="screen">
+        <div class="card" style="max-width: 450px;">
+            <h2 style="color: #00ff88; margin-top: 0;">تعديل الـ Avatar</h2>
+            <p style="font-size: 14px; color: #ccc;">اختر شخصيتك الأساسية (ولد أو بنت):</p>
+            <div class="char-select">
+                <div class="char-option" id="boyOpt" onclick="selectChar('boy')">
+                    <div class="char-img" style="background-image: url('https://tr.rbxassets.com/75c43235e028c9643a8130e674d0e6b2/420/420/Avatar/Png');"></div>
+                    <span style="font-size: 12px; color: #00ff88; margin-top: 5px; font-weight: bold;">ولد (بدلة)</span>
+                </div>
+                <div class="char-option" id="girlOpt" onclick="selectChar('girl')">
+                    <div class="char-img" style="background-image: url('https://tr.rbxassets.com/433a3692f283c3c5a7f6b7a818669748/420/420/Avatar/Png');"></div>
+                    <span style="font-size: 12px; color: #ff7675; margin-top: 5px; font-weight: bold;">بنت (رما)</span>
+                </div>
             </div>
-            <div class="char-option" id="girlOpt" onclick="selectChar('girl')">
-                <span style="font-size: 13px; color: #ff7675; font-weight: bold;">بنت</span>
-            </div>
+            <button class="btn" style="background: #00ff88;" onclick="showScreen('homeScreen')">حفظ والعودة للهوم</button>
         </div>
-        <button class="btn" style="max-width: 200px; background: #00ff88;" onclick="closeAvatar()">حفظ والعودة للهوم</button>
     </div>
 
-    <!-- 4️⃣ شاشة اختيار المابات -->
-    <div id="mapScreen">
+    <!-- 4️⃣ شاشة المتجر (Catalog) -->
+    <div id="catalogScreen" class="screen">
+        <div class="card">
+            <h2 style="color: #ffd700; margin-top: 0;">Catalog (متجر روبلوكس)</h2>
+            <p>رصيدك الحالي: <span id="catalogRobux" style="color: #ffd700; font-weight: bold;">30 💎</span></p>
+            <div class="shop-item">
+                <div style="text-align: right;">
+                    <span style="display: block; font-weight: bold; font-size: 14px;">سكن البدلة الرسمي الأنيق</span>
+                    <span style="color: #ffd700; font-size: 12px;">5 روبوكس</span>
+                </div>
+                <button class="btn" style="width: auto; padding: 8px 15px; background: #00ff88; font-size: 13px; margin:0;" onclick="buySuitFromCatalog()">شراء</button>
+            </div>
+            <button class="btn" style="margin-top: 20px; background: #444;" onclick="showScreen('homeScreen')">رجوع للهوم</button>
+        </div>
+    </div>
+
+    <!-- 5️⃣ شاشة اختيار المابات (Maps) -->
+    <div id="mapScreen" class="screen">
         <h1 style="color: #ffd700;">اختار الماب للعب!</h1>
         <div class="map-grid">
-            <div class="map-card" onclick="startGame('parkour')">
+            <div class="map-card" onclick="startGame('ماب الباركور')">
                 <h3 style="color: #00ff88;">ماب الباركور</h3>
-                <p style="font-size: 12px; color: #ccc;">نط وانسط واطلع لفوق!</p>
+                <p style="font-size: 12px; color: #ccc;">نط وانسط واطلع للمستويات العليا!</p>
             </div>
-            <div class="map-card" onclick="startGame('combat')">
-                <h3 style="color: #ff4757;">ماب القتال (Blox)</h3>
-                <p style="font-size: 12px; color: #ccc;">اضرب الأعداء بمهاراتك!</p>
+            <div class="map-card" onclick="startGame('ماب القتال (Blox)')">
+                <h3 style="color: #ff4757;">ماب القتال</h3>
+                <p style="font-size: 12px; color: #ccc;">اضرب الأعداء بمهاراتك زي بلوكس فروت!</p>
             </div>
         </div>
-        <button class="btn" style="max-width: 200px; margin-top: 30px; background: #ff4757;" onclick="backToHome()">رجوع للهوم</button>
+        <button class="btn" style="max-width: 200px; margin-top: 30px; background: #ff4757;" onclick="showScreen('homeScreen')">رجوع للهوم</button>
     </div>
 
-    <!-- 5️⃣ واجهة اللعبة داخل الماب -->
-    <div id="gameScreen">
+    <!-- 6️⃣ واجهة اللعبة الفعليّة داخل الماب -->
+    <div id="gameScreen" class="screen">
         <div class="hud">
             <div class="robux-counter" id="gameRobux">الروبوكس: 30 💎</div>
-            <button class="btn" style="width: auto; padding: 6px 12px; margin: 0; background: #ff4757;" onclick="exitToMaps()">المابات 🔄</button>
+            <button class="btn" style="width: auto; padding: 6px 12px; margin: 0; background: #ff4757;" onclick="showScreen('mapScreen')">المابات 🔄</button>
         </div>
 
         <div id="playArea">
@@ -216,26 +224,26 @@
             <div id="hitEffect">💥 بوم!</div>
         </div>
 
-        <!-- المتجر (Catalog Modal) -->
+        <!-- المتجر السريع داخل الماب -->
         <div id="shopModal">
-            <h3 style="color: #ffd700; margin-top: 0;">متجر روبلوكس (Catalog)</h3>
+            <h3 style="color: #ffd700; margin-top: 0;">متجر السكنات السريع</h3>
             <div class="shop-item">
                 <div style="text-align: right;">
                     <span style="display: block; font-weight: bold; font-size: 13px;">سكن البدلة الرسمي</span>
                     <span style="color: #ffd700; font-size: 11px;">5 روبوكس</span>
                 </div>
-                <button class="btn" style="width: auto; padding: 6px 12px; background: #00ff88; font-size: 12px; margin:0;" onclick="buySuit()">شراء</button>
+                <button class="btn" style="width: auto; padding: 6px 12px; background: #00ff88; font-size: 12px; margin:0;" onclick="buySuitFromCatalog()">شراء</button>
             </div>
             <button class="btn" style="margin-top: 15px; width: 100%; background: #444; font-size: 14px;" onclick="toggleShop()">إغلاق المتجر</button>
         </div>
 
-        <!-- أزرار التحكم -->
+        <!-- أزرار التحكم باللمس -->
         <div class="controls">
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 12px;">
                 <button class="ctrl-btn" onclick="movePlayer('left')">⬅️</button>
                 <button class="ctrl-btn" onclick="movePlayer('right')">➡️</button>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 12px;">
                 <button class="ctrl-btn" onclick="jumpPlayer()">⬆️</button>
                 <button class="ctrl-btn attack-btn" onclick="attackAction()">⚔️</button>
             </div>
@@ -243,82 +251,120 @@
     </div>
 
     <script>
-        let robux = 30;
-        let selectedCharacter = 'boy';
-        let playerElement = document.getElementById('playerSprite');
+        // إعدادات فايربيس الخاصة بمشروعك (Youssef Project)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCVuXNvicFn9RZ286BT9wNH7bgq5nPfkq",
+            authDomain: "youssef-5c7dc.firebaseapp.com",
+            databaseURL: "https://youssef-5c7dc-default-rtdb.firebaseio.com",
+            projectId: "youssef-5c7dc",
+            storageBucket: "youssef-5c7dc.appspot.com",
+            messagingSenderId: "389683823556",
+            appId: "1:309683823556:web:a54e51e205ef596cf3fa91"
+        };
+        
+        // تفعيل وتهيئة الفايربيس بقاعدة البيانات الخاصة بك
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
+        let userId = "youssef_player"; 
+        let robux = 30;
+        
         const charSprites = {
-            boy: 'https://tr.rbxassets.com/08016968e2855d7289621c65666f68e1/420/420/Avatar/Png', 
+            boy: 'https://tr.rbxassets.com/75c43235e028c9643a8130e674d0e6b2/420/420/Avatar/Png', 
             girl: 'https://tr.rbxassets.com/433a3692f283c3c5a7f6b7a818669748/420/420/Avatar/Png', 
             suit: 'https://tr.rbxassets.com/75c43235e028c9643a8130e674d0e6b2/420/420/Avatar/Png'  
         };
+        
+        let currentAvatarKey = 'boy';
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+        }
 
         function loginToHome() {
             const user = document.getElementById('regUser').value.trim();
-            if(!user) return alert("اكتب اسم المستخدم الأول!");
+            if(!user) return alert("من فضلك اكتب اسم المستخدم الأول يا بطل!");
             document.getElementById('displayName').innerText = user;
+            userId = user.replace(/\s+/g, '_'); 
             
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'flex';
-            updateAvatars();
+            showScreen('homeScreen');
+            loadUserDataFromCloud();
         }
 
         function logout() {
-            document.getElementById('homeScreen').style.display = 'none';
-            document.getElementById('authScreen').style.display = 'flex';
+            showScreen('authScreen');
         }
 
         function selectChar(type) {
-            selectedCharacter = type;
+            currentAvatarKey = type;
             document.getElementById('boyOpt').classList.toggle('selected', type === 'boy');
             document.getElementById('girlOpt').classList.toggle('selected', type === 'girl');
-            updateAvatars();
+            
+            updateAvatarVisuals();
+            saveUserDataToCloud();
         }
 
-        function updateAvatars() {
-            const imgUrl = charSprites[selectedCharacter];
-            document.getElementById('navAvatarImg').style.backgroundImage = `url('${imgUrl}')`;
-            playerElement.style.backgroundImage = `url('${imgUrl}')`;
+        function updateAvatarVisuals() {
+            const imgUrl = charSprites[currentAvatarKey];
+            document.getElementById('homeAvatarImg').style.backgroundImage = `url('${imgUrl}')`;
+            document.getElementById('playerSprite').style.backgroundImage = `url('${imgUrl}')`;
         }
 
-        function openAvatar() {
-            document.getElementById('homeScreen').style.display = 'none';
-            document.getElementById('avatarScreen').style.display = 'flex';
+        function saveUserDataToCloud() {
+            db.ref('users/' + userId).set({
+                avatar: currentAvatarKey,
+                robux: robux
+            });
         }
 
-        function closeAvatar() {
-            document.getElementById('avatarScreen').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'flex';
+        function loadUserDataFromCloud() {
+            db.ref('users/' + userId).on('value', (snap) => {
+                const data = snap.val();
+                if(data) {
+                    if(data.avatar) currentAvatarKey = data.avatar;
+                    if(data.robux !== undefined) robux = data.robux;
+                    
+                    document.getElementById('homeRobux').innerText = robux + " 💎";
+                    document.getElementById('catalogRobux').innerText = robux + " 💎";
+                    document.getElementById('gameRobux').innerText = `الروبوكس: ${robux} 💎`;
+                    
+                    document.getElementById('boyOpt').classList.toggle('selected', currentAvatarKey === 'boy');
+                    document.getElementById('girlOpt').classList.toggle('selected', currentAvatarKey === 'girl');
+                    updateAvatarVisuals();
+                } else {
+                    saveUserDataToCloud(); 
+                }
+            });
         }
 
-        function openCatalog() {
-            // فتح المابات ومنها أو جوا اللعبة تفتح المتجر
-            openMaps();
+        function toggleShop() {
+            document.getElementById('shopModal').classList.toggle('active');
         }
 
-        function openMaps() {
-            document.getElementById('homeScreen').style.display = 'none';
-            document.getElementById('mapScreen').style.display = 'flex';
-        }
-
-        function backToHome() {
-            document.getElementById('mapScreen').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'flex';
-        }
-
-        function startGame(mapType) {
-            document.getElementById('mapScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-            updateAvatars();
-            // لو دخل ماب وعايز يفتح المتجر يقدر يضغط عليها من زرار الهوم أو الماب
-            if(confirm("هل تريد فتح متجر (Catalog) السكنات داخل اللعبة؟")) {
-                toggleShop();
+        function buySuitFromCatalog() {
+            if(robux >= 5) {
+                robux -= 5;
+                currentAvatarKey = 'suit';
+                document.getElementById('homeRobux').innerText = robux + " 💎";
+                document.getElementById('catalogRobux').innerText = robux + " 💎";
+                document.getElementById('gameRobux').innerText = `الروبوكس: ${robux} 💎`;
+                
+                updateAvatarVisuals();
+                saveUserDataToCloud();
+                
+                if(document.getElementById('shopModal').classList.contains('active')) {
+                    toggleShop();
+                }
+                alert("🎉 مبروك! اشتريت سكن البدلة وحُفظ تلقائياً في فايربيس.");
+            } else {
+                alert("❌ رصيدك لا يكفي لشراء البدلة!");
             }
         }
 
-        function exitToMaps() {
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('mapScreen').style.display = 'flex';
+        function startGame(mapName) {
+            showScreen('gameScreen');
+            updateAvatarVisuals();
         }
 
         let playerLeft = 50; 
@@ -328,38 +374,21 @@
             } else {
                 playerLeft = Math.min(90, playerLeft + 5);
             }
-            playerElement.style.left = playerLeft + '%';
+            document.getElementById('playerSprite').style.left = playerLeft + '%';
         }
 
         function jumpPlayer() {
-            playerElement.style.bottom = '160px';
-            setTimeout(() => { playerElement.style.bottom = '80px'; }, 300);
+            const player = document.getElementById('playerSprite');
+            player.style.bottom = '170px';
+            setTimeout(() => { player.style.bottom = '80px'; }, 300);
         }
 
         function attackAction() {
             const hit = document.getElementById('hitEffect');
             hit.style.left = (playerLeft + 5) + '%';
-            hit.style.bottom = '140px';
+            hit.style.bottom = '150px';
             hit.style.display = 'block';
             setTimeout(() => { hit.style.display = 'none'; }, 400);
-        }
-
-        function toggleShop() {
-            document.getElementById('shopModal').classList.toggle('active');
-        }
-
-        function buySuit() {
-            if(robux >= 5) {
-                robux -= 5;
-                document.getElementById('gameRobux').innerText = `الروبوكس: ${robux} 💎`;
-                document.getElementById('homeRobux').innerText = `${robux} 💎`;
-                selectedCharacter = 'suit';
-                updateAvatars();
-                toggleShop();
-                alert("🎉 مبروك! اشتريت سكن البدلة من الكاتلوج وتطبق على أفتارك فوراً.");
-            } else {
-                alert("❌ رصيدك لا يكفي!");
-            }
         }
     </script>
 </body>
